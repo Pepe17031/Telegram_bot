@@ -1,0 +1,12 @@
+django
+psycopg2-binary
+
+channels[daphne]
+channels-redis
+
+celery[redis]
+django_celery_beat
+
+requests
+telebot
+prettytable
