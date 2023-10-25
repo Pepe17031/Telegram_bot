@@ -5,7 +5,7 @@ import requests
 import telebot
 import prettytable as pt
 
-from .models import FundingFinal, TelegramUsers
+from .models import FundingFinal, TelegramUsers, FundingTop10Pos, FundingTop10Neg
 
 
 @shared_task()
@@ -27,8 +27,8 @@ def get_funding_rate():
 @shared_task()
 def send_funding_to_tg():
     bot = telebot.TeleBot("6726984732:AAFU2iMO880Zdp9T4wBGWiZew0F36xtC7AM", parse_mode="MarkdownV2")
-    symbol_order = ["BTC", "ETH", "T100", "Oth"]
 
+    # ------------------------------- GET DATA FROM DB
     table_data = FundingFinal.objects.all().values(
         "symbol",
         "binance_positive",
@@ -37,13 +37,16 @@ def send_funding_to_tg():
         "other_ex_positive",
         "other_ex_balance",
         "other_ex_negative",
-        "top_pos",
-        "top_neg"
     ).order_by("symbol")
     listdata = list(table_data)
 
-    user_data = TelegramUsers.objects.values_list("chat_id", flat=True)
-    list_user_data = list(user_data)
+    # ------------------------------- SUM DATA
+
+    positive_sum = (sum(item["binance_positive"] for item in listdata))
+    balance_sum = (sum(item["binance_balance"] for item in listdata))
+    negative_sum = (sum(item["binance_negative"] for item in listdata))
+
+    # ------------------------------- TABLES MAIN
 
     table = pt.PrettyTable()
 
@@ -52,20 +55,46 @@ def send_funding_to_tg():
          item['other_ex_positive'], item['other_ex_balance'], item['other_ex_negative']) for item in listdata
     ]
 
-    # for (label, bin1, bin2, bin3, o1, o2, o3) in data:
-    #     table.add_row([label, f'{bin1}', f'{bin2}', f'{bin3}', f'{o1}', f'{o2}', f'{o3}'])
-
-    table.add_column(fieldname=f'Exc', column=[f'B+', f'B=', f'B-', f'O+', f'O=', f'O-'], align='l')
+    table.add_column(fieldname=f'Exc', column=[f'Bin +', f'Bin =', f'Bin -', f'Oth +', f'Oth =', f'Oth -'], align='l')
     for (label, bin1, bin2, bin3, o1, o2, o3) in data:
         table.add_column(fieldname=label, column=[bin1, bin2, bin3, o1, o2, o3], align='r')
 
-    top100_entry = FundingFinal.objects.get(symbol="T100")
-    top_pos_value = top100_entry.top_pos
-    top_neg_value = top100_entry.top_neg
-    print(list_user_data)
+    # ------------------------------- TABLES SECOND
+    table10 = pt.PrettyTable()
 
+    table10pos_data = FundingTop10Pos.objects.all().values(
+        "pos_symbol",
+        "pos_value",
+    )
+    listpos10data = list(table10pos_data)
+    pos_symbols = [item.get('pos_symbol', 'N/A') for item in listpos10data]
+    pos_values = [item.get('pos_value', 0) for item in listpos10data]
+
+    table10pos_data = FundingTop10Neg.objects.all().values(
+        "neg_symbol",
+        "neg_value",
+    )
+    listneg10data = list(table10pos_data)
+    neg_symbols = [item.get('neg_symbol', 'N/A') for item in listneg10data]
+    neg_values = [item.get('neg_value', 0) for item in listneg10data]
+
+    print(neg_values)
+
+    table10.add_column(fieldname=f'Top +', column=pos_symbols, align='l')
+    table10.add_column(fieldname=f'#', column=pos_values, align='l')
+    table10.add_column(fieldname=f'Top -', column=neg_symbols, align='l')
+    table10.add_column(fieldname=f'#', column=neg_values, align='l')
+
+    # ------------------------------- MESSAGE BODY
+    user_data = TelegramUsers.objects.values_list("chat_id", flat=True)
+    list_user_data = list(user_data)
+    print(list_user_data)
     for chat_id in list_user_data:
         print(f'Chat ID: {chat_id}')
-        bot.send_message(chat_id, f'```{table}```')
-        bot.send_message(chat_id, f'Top positive funding rate: {top_pos_value}')
-        bot.send_message(chat_id, f'Top negative funding rate: {top_neg_value}')
+
+        combined_message = f'```\nPos(+): {positive_sum}\nBal(=): {balance_sum}\nNeg(-): {negative_sum}\n\n{table}\n\n{table10}\n\nEyeOfChubaka Funding v.1.0\n```'
+        bot.send_message(chat_id, combined_message)
+
+        #bot.send_message(chat_id, f'```{table}```')
+
+

@@ -29,5 +29,13 @@ class FundingFinal(models.Model):
     other_ex_positive = models.IntegerField(default=0)
     other_ex_balance = models.IntegerField(default=0)
     other_ex_negative = models.IntegerField(default=0)
-    top_pos = models.CharField(max_length=120, default=0)
-    top_neg = models.CharField(max_length=120, default=0)
+
+
+class FundingTop10Pos(models.Model):
+    pos_symbol = models.CharField(max_length=10, default="")
+    pos_value = models.FloatField(default=0)
+
+
+class FundingTop10Neg(models.Model):
+    neg_symbol = models.CharField(max_length=10, default="")
+    neg_value = models.FloatField(default=0)

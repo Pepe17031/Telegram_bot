@@ -1,4 +1,4 @@
-from .models import Funding, FundingFinal
+from .models import Funding, FundingFinal, FundingTop10Neg, FundingTop10Pos
 
 
 def funding_rate(response):
@@ -19,6 +19,7 @@ def funding_rate(response):
     eth = []
     top100 = []
     other_coins = []
+    all_coins = []
 
     for currency_data in data.get("data", []):
 
@@ -32,14 +33,14 @@ def funding_rate(response):
                     return ex["rate"]
             return 0
 
-        binance_rate = round(get_rate(u_margin_list, "Binance"), 4)
-        okx_rate = round(get_rate(u_margin_list, "OKX"), 4)
-        dydx_rate = round(get_rate(u_margin_list, "dYdX"), 4)
-        bybit_rate = round(get_rate(u_margin_list, "Bybit"), 4)
-        gate_rate = round(get_rate(u_margin_list, "Gate"), 4)
-        bitget_rate = round(get_rate(u_margin_list, "Bitget"), 4)
-        coinex_rate = round(get_rate(u_margin_list, "CoinEx"), 4)
-        bingx_rate = round(get_rate(u_margin_list, "BingX"), 4)
+        binance_rate = round(get_rate(u_margin_list, "Binance"), 2)
+        okx_rate = round(get_rate(u_margin_list, "OKX"), 2)
+        dydx_rate = round(get_rate(u_margin_list, "dYdX"), 2)
+        bybit_rate = round(get_rate(u_margin_list, "Bybit"), 2)
+        gate_rate = round(get_rate(u_margin_list, "Gate"), 2)
+        bitget_rate = round(get_rate(u_margin_list, "Bitget"), 2)
+        coinex_rate = round(get_rate(u_margin_list, "CoinEx"), 2)
+        bingx_rate = round(get_rate(u_margin_list, "BingX"), 2)
 
         rates = [okx_rate, dydx_rate, bybit_rate, gate_rate, bitget_rate, coinex_rate, bingx_rate]
         non_zero_rates = [rate for rate in rates if rate != 0]
@@ -52,6 +53,8 @@ def funding_rate(response):
             average = 0
 
         other_exchange_sum = round(average, 4)
+
+        all_coins.append([symbol, round(binance_rate, 4)])
 
         if symbol in top100list:
             top100.append([symbol, round(binance_rate, 4), other_exchange_sum])
@@ -94,124 +97,85 @@ def funding_rate(response):
         # Сохраняем изменения
         funding_obj.save()
 
-        def get_final_tables(input_data):
+    def get_final_tables(input_data):
 
-            other_ex_positive_count = 0
-            other_ex_balanced_count = 0
-            other_ex_negative_count = 0
+        other_ex_positive_count = 0
+        other_ex_balanced_count = 0
+        other_ex_negative_count = 0
 
-            for _, _, other_ex in input_data['data']:
-                if other_ex >= 0.01:
-                    other_ex_positive_count += 1
-                elif -0.01 <= other_ex <= 0.01:
-                    other_ex_balanced_count += 1
-                else:
-                    other_ex_negative_count += 1
+        for _, _, other_ex in input_data['data']:
+            if other_ex >= 0.01:
+                other_ex_positive_count += 1
+            elif -0.01 <= other_ex <= 0.01:
+                other_ex_balanced_count += 1
+            else:
+                other_ex_negative_count += 1
 
-            binance_positive_count = 0
-            binance_balanced_count = 0
-            binance_negative_count = 0
+        binance_positive_count = 0
+        binance_balanced_count = 0
+        binance_negative_count = 0
 
-            for _, binance, _ in input_data['data']:
-                if binance >= 0.01:
-                    binance_positive_count += 1
-                elif -0.01 <= binance <= 0.01:
-                    binance_balanced_count += 1
-                else:
-                    binance_negative_count += 1
-
-
-            funding_final_obj, created = FundingFinal.objects.get_or_create(
-                symbol=input_data['label'],
-                defaults={
-                    "binance_positive": binance_positive_count,
-                    "binance_balance": binance_balanced_count,
-                    "binance_negative": binance_negative_count,
-                    "other_ex_positive": other_ex_positive_count,
-                    "other_ex_balance": other_ex_balanced_count,
-                    "other_ex_negative": other_ex_negative_count,
-                }
-            )
-
-            # Если запись уже существует, обновляем значения
-            if not created:
-                funding_final_obj.binance_positive = binance_positive_count
-                funding_final_obj.binance_balance = binance_balanced_count
-                funding_final_obj.binance_negative = binance_negative_count
-                funding_final_obj.other_ex_positive = other_ex_positive_count
-                funding_final_obj.other_ex_balance = other_ex_balanced_count
-                funding_final_obj.other_ex_negative = other_ex_negative_count
-
-            # Сохраняем изменения
-            funding_final_obj.save()
+        for _, binance, _ in input_data['data']:
+            if binance >= 0.01:
+                binance_positive_count += 1
+            elif -0.01 <= binance <= 0.01:
+                binance_balanced_count += 1
+            else:
+                binance_negative_count += 1
 
 
-        def get_final_tables2(input_data):
+        funding_final_obj, created = FundingFinal.objects.get_or_create(
+            symbol=input_data['label'],
+            defaults={
+                "binance_positive": binance_positive_count,
+                "binance_balance": binance_balanced_count,
+                "binance_negative": binance_negative_count,
+                "other_ex_positive": other_ex_positive_count,
+                "other_ex_balance": other_ex_balanced_count,
+                "other_ex_negative": other_ex_negative_count,
+            }
+        )
 
-            other_ex_positive_count = 0
-            other_ex_balanced_count = 0
-            other_ex_negative_count = 0
+        # Если запись уже существует, обновляем значения
+        if not created:
+            funding_final_obj.binance_positive = binance_positive_count
+            funding_final_obj.binance_balance = binance_balanced_count
+            funding_final_obj.binance_negative = binance_negative_count
+            funding_final_obj.other_ex_positive = other_ex_positive_count
+            funding_final_obj.other_ex_balance = other_ex_balanced_count
+            funding_final_obj.other_ex_negative = other_ex_negative_count
 
-            for _, _, other_ex in input_data['data']:
-                if other_ex >= 0.01:
-                    other_ex_positive_count += 1
-                elif -0.01 <= other_ex <= 0.01:
-                    other_ex_balanced_count += 1
-                else:
-                    other_ex_negative_count += 1
-
-            binance_positive_count = 0
-            binance_balanced_count = 0
-            binance_negative_count = 0
-
-            for _, binance, _ in input_data['data']:
-                if binance >= 0.01:
-                    binance_positive_count += 1
-                elif -0.01 <= binance <= 0.01:
-                    binance_balanced_count += 1
-                else:
-                    binance_negative_count += 1
-
-            top_pos = []
-            top_neg = []
-
-            sort_column_index = 1
-            sorted_data = sorted(input_data['data'], key=lambda x: x[sort_column_index], reverse=True)
-
-            top_pos = [item[0] for item in sorted_data[:10]]
-            top_neg = [item[0] for item in sorted_data[-10:]]
+        # Сохраняем изменения
+        funding_final_obj.save()
 
 
-            funding_final_obj, created = FundingFinal.objects.get_or_create(
-                symbol=input_data['label'],
-                defaults={
-                    "binance_positive": binance_positive_count,
-                    "binance_balance": binance_balanced_count,
-                    "binance_negative": binance_negative_count,
-                    "other_ex_positive": other_ex_positive_count,
-                    "other_ex_balance": other_ex_balanced_count,
-                    "other_ex_negative": other_ex_negative_count,
-                    "top_pos": top_pos,
-                    "top_neg": top_neg,
-                }
-            )
+    def get_top10(input_data):
 
-            # Если запись уже существует, обновляем значения
-            if not created:
-                funding_final_obj.binance_positive = binance_positive_count
-                funding_final_obj.binance_balance = binance_balanced_count
-                funding_final_obj.binance_negative = binance_negative_count
-                funding_final_obj.other_ex_positive = other_ex_positive_count
-                funding_final_obj.other_ex_balance = other_ex_balanced_count
-                funding_final_obj.other_ex_negative = other_ex_negative_count
-                funding_final_obj.top_pos = top_pos
-                funding_final_obj.top_neg = top_neg
+        top10_pos = []
+        top10_neg = []
 
-            # Сохраняем изменения
-            funding_final_obj.save()
+        sort_column_index = 1
+        sorted_data = sorted(input_data['data'], key=lambda x: x[sort_column_index], reverse=True)
+        top_pos_data = sorted_data[:10]
+        top_neg_data = sorted_data[-10:]
 
 
-        get_final_tables({'label': 'BTC', 'data': btc})
-        get_final_tables({'label': 'ETH', 'data': eth})
-        get_final_tables2({'label': 'T100', 'data': top100})
-        get_final_tables({'label': 'Oth', 'data': other_coins})
+        FundingTop10Pos.objects.all().delete()
+        FundingTop10Neg.objects.all().delete()
+
+
+        for pos_symbol, value in top_pos_data:
+            FundingTop10Pos.objects.create(pos_symbol=pos_symbol, pos_value=value)
+
+        # Создайте и сохраните объекты FundingTop10 для последних 10 элементов
+        for neg_symbol, value in top_neg_data:
+            FundingTop10Neg.objects.create(neg_symbol=neg_symbol, neg_value=value)
+
+
+
+    get_final_tables({'label': 'BTC', 'data': btc})
+    get_final_tables({'label': 'ETH', 'data': eth})
+    get_final_tables({'label': 'T100', 'data': top100})
+    get_final_tables({'label': 'OTH', 'data': other_coins})
+
+    get_top10({'label': 'all', 'data': all_coins})
