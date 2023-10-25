@@ -213,5 +213,5 @@ def funding_rate(response):
 
         get_final_tables({'label': 'BTC', 'data': btc})
         get_final_tables({'label': 'ETH', 'data': eth})
-        get_final_tables2({'label': 'Top100', 'data': top100})
-        get_final_tables({'label': 'OtherCoins', 'data': other_coins})
+        get_final_tables2({'label': 'T100', 'data': top100})
+        get_final_tables({'label': 'Oth', 'data': other_coins})

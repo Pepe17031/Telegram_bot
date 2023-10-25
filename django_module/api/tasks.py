@@ -1,4 +1,5 @@
 from celery import shared_task
+
 from .funding_module import funding_rate
 import requests
 import telebot
@@ -26,6 +27,7 @@ def get_funding_rate():
 @shared_task()
 def send_funding_to_tg():
     bot = telebot.TeleBot("6726984732:AAFU2iMO880Zdp9T4wBGWiZew0F36xtC7AM", parse_mode="MarkdownV2")
+    symbol_order = ["BTC", "ETH", "T100", "Oth"]
 
     table_data = FundingFinal.objects.all().values(
         "symbol",
@@ -43,28 +45,25 @@ def send_funding_to_tg():
     user_data = TelegramUsers.objects.values_list("chat_id", flat=True)
     list_user_data = list(user_data)
 
-    table = pt.PrettyTable(['Label', 'Bin+', 'Bin0', 'Bin-', 'Oth+', 'Oth0', 'Oth-'])
-    table.align['Label'] = 'l'
-    table.align['Bin+'] = 'l'
-    table.align['Bin0'] = 'l'
-    table.align['Bin-'] = 'l'
-    table.align['Oth+'] = 'r'
-    table.align['Oth0'] = 'r'
-    table.align['Oth-'] = 'r'
+    table = pt.PrettyTable()
 
     data = [
         (item['symbol'], item['binance_positive'], item['binance_balance'], item['binance_negative'],
          item['other_ex_positive'], item['other_ex_balance'], item['other_ex_negative']) for item in listdata
     ]
 
-    top100_entry = FundingFinal.objects.get(symbol="Top100")
+    # for (label, bin1, bin2, bin3, o1, o2, o3) in data:
+    #     table.add_row([label, f'{bin1}', f'{bin2}', f'{bin3}', f'{o1}', f'{o2}', f'{o3}'])
+
+    table.add_column(fieldname=f'Exc', column=[f'B+', f'B=', f'B-', f'O+', f'O=', f'O-'], align='l')
+    for (label, bin1, bin2, bin3, o1, o2, o3) in data:
+        table.add_column(fieldname=label, column=[bin1, bin2, bin3, o1, o2, o3], align='r')
+
+    top100_entry = FundingFinal.objects.get(symbol="T100")
     top_pos_value = top100_entry.top_pos
     top_neg_value = top100_entry.top_neg
-
-    for label, bin1, bin2, bin3, o1, o2, o3 in data:
-        table.add_row([label, f'{bin1}', f'{bin2}', f'{bin3}', f'{o1}', f'{o2}', f'{o3}'])
-
     print(list_user_data)
+
     for chat_id in list_user_data:
         print(f'Chat ID: {chat_id}')
         bot.send_message(chat_id, f'```{table}```')

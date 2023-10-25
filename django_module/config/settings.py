@@ -133,10 +133,10 @@ CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
 CELERY_BEAT_SCHEDULE = {
     "get_funding_rate": {
         "task": "api.tasks.get_funding_rate",
-        "schedule": 60 * 5
+        "schedule": 10.0
     },
     "send_funding_rate_tg": {
         "task": "api.tasks.send_funding_to_tg",
-        "schedule": 60 * 10
+        "schedule": 10.0
     },
 }
