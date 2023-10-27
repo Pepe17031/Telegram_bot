@@ -74,11 +74,11 @@ def send_funding_to_tg():
     pos_symbols = [item.get('pos_symbol', 'N/A') for item in listpos10data]
     pos_values = [item.get('pos_value', 0) for item in listpos10data]
 
-    table10pos_data = FundingTop10Neg.objects.all().values(
+    table10neg_data = FundingTop10Neg.objects.all().values(
         "neg_symbol",
         "neg_value",
-    ).order_by("-neg_value")
-    listneg10data = list(table10pos_data)
+    ).order_by("neg_value")
+    listneg10data = list(table10neg_data)
     neg_symbols = [item.get('neg_symbol', 'N/A') for item in listneg10data]
     neg_values = [item.get('neg_value', 0) for item in listneg10data]
 
