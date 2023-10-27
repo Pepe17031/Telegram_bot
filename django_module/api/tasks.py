@@ -42,12 +42,16 @@ def send_funding_to_tg():
 
     # ------------------------------- SUM DATA
 
+
     positive_sum = (sum(item["binance_positive"] for item in listdata))
     balance_sum = (sum(item["binance_balance"] for item in listdata))
     negative_sum = (sum(item["binance_negative"] for item in listdata))
+    all_sum = positive_sum + balance_sum + negative_sum
+
+    def percentage(part):
+        return round((part / all_sum) * 100)
 
     # ------------------------------- TABLES MAIN
-
     table = pt.PrettyTable()
 
     data = [
@@ -73,7 +77,7 @@ def send_funding_to_tg():
     table10pos_data = FundingTop10Neg.objects.all().values(
         "neg_symbol",
         "neg_value",
-    )
+    ).order_by("-neg_value")
     listneg10data = list(table10pos_data)
     neg_symbols = [item.get('neg_symbol', 'N/A') for item in listneg10data]
     neg_values = [item.get('neg_value', 0) for item in listneg10data]
@@ -92,9 +96,8 @@ def send_funding_to_tg():
     for chat_id in list_user_data:
         print(f'Chat ID: {chat_id}')
 
-        combined_message = f'```\nPos(+): {positive_sum}\nBal(=): {balance_sum}\nNeg(-): {negative_sum}\n\n{table}\n\n{table10}\n\nEyeOfChubaka Funding v.1.0\n```'
+        combined_message = f'```\nPos(+): {positive_sum} ({percentage(positive_sum)}%)\nBal(=): {balance_sum} ({percentage(balance_sum)}%)\nNeg(-): {negative_sum} ({percentage(negative_sum)}%)\n\n{table}\n\n{table10}\n\nEyeOfChubaka Funding v.1.0\n```'
         bot.send_message(chat_id, combined_message)
 
-        #bot.send_message(chat_id, f'```{table}```')
 
 

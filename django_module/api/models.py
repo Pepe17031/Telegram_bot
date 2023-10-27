@@ -35,7 +35,18 @@ class FundingTop10Pos(models.Model):
     pos_symbol = models.CharField(max_length=10, default="")
     pos_value = models.FloatField(default=0)
 
+    def save(self, *args, **kwargs):
+        # Обрезаем значение поля до 6 символов перед сохранением
+        self.pos_symbol = self.pos_symbol[:6]
+        super().save(*args, **kwargs)
+
 
 class FundingTop10Neg(models.Model):
     neg_symbol = models.CharField(max_length=10, default="")
     neg_value = models.FloatField(default=0)
+
+    def save(self, *args, **kwargs):
+        # Обрезаем значение поля до 6 символов перед сохранением
+        self.neg_symbol = self.neg_symbol[:6]
+        super().save(*args, **kwargs)
+
