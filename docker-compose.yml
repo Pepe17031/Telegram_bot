@@ -79,5 +79,13 @@ services:
     depends_on:
       - postgres
 
+  coin_watcher:
+    build:
+      context: ./coin_watcher
+      dockerfile: ./Dockerfile
+    container_name: coin_watcher
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
