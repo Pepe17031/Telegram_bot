@@ -139,4 +139,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "api.tasks.send_funding_to_tg",
         "schedule": 10.0
     },
+    "send_depth_to_tg": {
+        "task": "api.tasks.send_depth_to_tg",
+        "schedule": 10.0
+    },
 }

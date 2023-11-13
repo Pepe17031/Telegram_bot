@@ -1,11 +1,14 @@
 from celery import shared_task
+from django.db.models import Avg
 
 from .funding_module import funding_rate
 import requests
 import telebot
 import prettytable as pt
 
-from .models import FundingFinal, TelegramUsers, FundingTop10Pos, FundingTop10Neg
+from .models import FundingFinal, TelegramUsers, FundingTop10Pos, FundingTop10Neg, Depth
+
+bot = telebot.TeleBot("6726984732:AAFU2iMO880Zdp9T4wBGWiZew0F36xtC7AM", parse_mode="MarkdownV2")
 
 
 @shared_task()
@@ -26,7 +29,6 @@ def get_funding_rate():
 
 @shared_task()
 def send_funding_to_tg():
-    bot = telebot.TeleBot("6726984732:AAFU2iMO880Zdp9T4wBGWiZew0F36xtC7AM", parse_mode="MarkdownV2")
 
     # ------------------------------- GET DATA FROM DB
     table_data = FundingFinal.objects.all().values(
@@ -82,7 +84,6 @@ def send_funding_to_tg():
     neg_symbols = [item.get('neg_symbol', 'N/A') for item in listneg10data]
     neg_values = [item.get('neg_value', 0) for item in listneg10data]
 
-    print(neg_values)
 
     table10.add_column(fieldname=f'Top +', column=pos_symbols, align='l')
     table10.add_column(fieldname=f'#', column=pos_values, align='l')
@@ -92,7 +93,6 @@ def send_funding_to_tg():
     # ------------------------------- MESSAGE BODY
     user_data = TelegramUsers.objects.values_list("chat_id", flat=True)
     list_user_data = list(user_data)
-    print(list_user_data)
     for chat_id in list_user_data:
         print(f'Chat ID: {chat_id}')
 
@@ -100,4 +100,44 @@ def send_funding_to_tg():
         bot.send_message(chat_id, combined_message)
 
 
+@shared_task()
+def send_depth_to_tg():
 
+    # ------------------------------- GET DATA FROM DB
+    table_data = Depth.objects.all().values(
+        "symbol",
+        "limit8",
+        "limit30",
+    )
+    average_limit30 = table_data.aggregate(avg_limit30=Avg('limit30'))['avg_limit30']
+    average_limit8 = table_data.aggregate(avg_limit8=Avg('limit8'))['avg_limit8']
+    btcusdt_limit8 = table_data.get(symbol="BTCUSDT")["limit8"]
+
+    # ------------------------------- TABLES MAIN
+
+    table = pt.PrettyTable()
+
+    pos_data = table_data.order_by("-limit8")[:10]
+    list_pos_data = list(pos_data)
+    pos_symbols = [item.get('symbol', 'N/A') for item in list_pos_data]
+    pos_values = [item.get('limit8', 0) for item in list_pos_data]
+
+    neg_data = table_data.order_by("limit8")[:10]  # изменено здесь
+    list_neg_data = list(neg_data)
+    neg_symbols = [item.get('symbol', 'N/A') for item in list_neg_data]
+    neg_values = [item.get('limit8', 0) for item in list_neg_data]
+
+    table.add_column(fieldname=f'Top +', column=pos_symbols, align='l')
+    table.add_column(fieldname=f'#', column=pos_values, align='l')
+    table.add_column(fieldname=f'Top -', column=neg_symbols, align='l')
+    table.add_column(fieldname=f'#', column=neg_values, align='l')
+
+
+    # ------------------------------- MESSAGE BODY
+    user_data = TelegramUsers.objects.values_list("chat_id", flat=True)
+    list_user_data = list(user_data)
+
+    for chat_id in list_user_data:
+        print(f'Chat ID: {chat_id}')
+        combined_message = f'```\nBA8 BTC: {round(btcusdt_limit8, 2)}\nBA8 ALL: {round(average_limit8, 2)}\nAVG ALL: {round(average_limit30, 2)}\n{table}\n\nEyeOfChubaka BidAsk v.1.0\n```'
+        bot.send_message(chat_id, combined_message)
