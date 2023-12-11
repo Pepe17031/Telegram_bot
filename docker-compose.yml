@@ -3,6 +3,7 @@ version: '3.8'
 services:
 
   django:
+    restart: always
     build:
       context: ./django_module
       dockerfile: ./Dockerfile
@@ -20,6 +21,7 @@ services:
       - postgres
 
   celery:
+    restart: always
     build:
       context: ./django_module
       dockerfile: ./Dockerfile
@@ -31,6 +33,7 @@ services:
       - django
 
   celery_beat:
+    restart: always
     build:
       context: ./django_module
       dockerfile: ./Dockerfile
@@ -42,6 +45,7 @@ services:
       - django
 
   postgres:
+    restart: always
     image: postgres:alpine
     container_name: postgres
     volumes:
@@ -54,12 +58,14 @@ services:
       - "5432:5432"
 
   redis:
+    restart: always
     image: redis:alpine
     container_name: redis
     ports:
       - "6379:6379"
 
   nginx:
+    restart: always
     image: nginx:alpine
     container_name: nginx
     ports:
@@ -69,17 +75,8 @@ services:
     depends_on:
       - celery
 
-  tg_watcher:
-    build:
-      context: ./tg_new_user_watcher
-      dockerfile: ./Dockerfile
-    container_name: tg_watcher
-    command: >
-      bash -c "python telegram_bot.py"
-    depends_on:
-      - postgres
-
   coin_watcher:
+    restart: always
     build:
       context: ./coin_watcher
       dockerfile: ./Dockerfile

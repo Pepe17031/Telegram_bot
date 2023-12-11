@@ -93,12 +93,13 @@ def send_funding_to_tg():
     # ------------------------------- MESSAGE BODY
     user_data = TelegramUsers.objects.values_list("chat_id", flat=True)
     list_user_data = list(user_data)
-    for chat_id in list_user_data:
-        print(f'Chat ID: {chat_id}')
-
-        combined_message = f'```\nPos(+): {positive_sum} ({percentage(positive_sum)}%)\nBal(=): {balance_sum} ({percentage(balance_sum)}%)\nNeg(-): {negative_sum} ({percentage(negative_sum)}%)\n\n{table}\n\n{table10}\n\nEyeOfChubaka Funding v.1.0\n```'
-        bot.send_message(chat_id, combined_message)
-
+    # for chat_id in list_user_data:
+    #     print(f'Chat ID: {chat_id}')
+    #
+    #     combined_message = f'```\nPos(+): {positive_sum} ({percentage(positive_sum)}%)\nBal(=): {balance_sum} ({percentage(balance_sum)}%)\nNeg(-): {negative_sum} ({percentage(negative_sum)}%)\n\n{table}\n\n{table10}\n\nEyeOfChubaka Funding v.1.0\n```'
+    #     bot.send_message(chat_id, combined_message)
+    combined_message = f'```\nPos(+): {positive_sum} ({percentage(positive_sum)}%)\nBal(=): {balance_sum} ({percentage(balance_sum)}%)\nNeg(-): {negative_sum} ({percentage(negative_sum)}%)\n\n{table}\n\n{table10}\n\nEyeOfChubaka Funding v.1.0\n```'
+    bot.send_message(-1002135412128, combined_message,  message_thread_id=4)
 
 @shared_task()
 def send_depth_to_tg():
@@ -137,7 +138,10 @@ def send_depth_to_tg():
     user_data = TelegramUsers.objects.values_list("chat_id", flat=True)
     list_user_data = list(user_data)
 
-    for chat_id in list_user_data:
-        print(f'Chat ID: {chat_id}')
-        combined_message = f'```\nBA8 BTC: {round(btcusdt_limit8, 2)}\nBA8 ALL: {round(average_limit8, 2)}\nAVG ALL: {round(average_limit30, 2)}\n{table}\n\nEyeOfChubaka BidAsk v.1.0\n```'
-        bot.send_message(chat_id, combined_message)
+    # for chat_id in list_user_data:
+    #     print(f'Chat ID: {chat_id}')
+    #     combined_message = f'```\nBA8 BTC: {round(btcusdt_limit8, 2)}\nBA8 ALL: {round(average_limit8, 2)}\nAVG ALL: {round(average_limit30, 2)}\n{table}\n\nEyeOfChubaka BidAsk v.1.0\n```'
+    #     bot.send_message(chat_id, combined_message)
+
+    combined_message = f'```\nBA8 BTC: {round(btcusdt_limit8, 2)}\nBA8 ALL: {round(average_limit8, 2)}\nAVG ALL: {round(average_limit30, 2)}\n{table}\n\nEyeOfChubaka BidAsk v.1.0\n```'
+    bot.send_message(-1002135412128, combined_message,  message_thread_id=2)
